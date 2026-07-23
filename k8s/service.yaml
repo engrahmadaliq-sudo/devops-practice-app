@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-practice-app-service
+  labels:
+    app: devops-practice-app
+spec:
+  type: NodePort
+  selector:
+    app: devops-practice-app
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+      protocol: TCP

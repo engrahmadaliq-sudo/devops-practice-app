@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-practice-app
+  labels:
+    app: devops-practice-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devops-practice-app
+  template:
+    metadata:
+      labels:
+        app: devops-practice-app
+      annotations:
+        # Lets Prometheus auto-discover this pod's metrics endpoint
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+        - name: devops-practice-app
+          # Replaced automatically by Jenkins ("IMAGE_PLACEHOLDER") or set manually for local practice
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20

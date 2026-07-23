@@ -2,11 +2,14 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER   = "ahmedali772"
-        IMAGE_NAME       = "devops-practice-app"
-        IMAGE_TAG        = "${env.BUILD_NUMBER}"
-        FULL_IMAGE       = "${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
-        DOCKERHUB_CREDS  = credentials('dockerhub-creds')
+        
+    DOCKERHUB_USER = "ahmedali772"
+    IMAGE_NAME = "devops-practice-app"
+    IMAGE_TAG = "${env.BUILD_NUMBER}"
+    FULL_IMAGE = "${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
+
+    DOCKERHUB_CREDS = credentials('dockerhub-creds')
+
     }
 
     stages {

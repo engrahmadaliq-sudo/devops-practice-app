@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         
-    DOCKERHUB_USER = "ahmedali772"
+    DOCKERHUB_USER = "admin"
     IMAGE_NAME = "devops-practice-app"
     IMAGE_TAG = "${env.BUILD_NUMBER}"
     FULL_IMAGE = "${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"

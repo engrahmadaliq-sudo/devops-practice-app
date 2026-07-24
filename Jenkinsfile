@@ -1,17 +1,10 @@
 pipeline {
-    agent any
+    agent none
 
     options {
         timestamps()
         timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
-    }
-
-    tools {
-        maven 'Maven3'   // Name must match a Maven installation configured in
-                         // Manage Jenkins -> Tools -> Maven installations
-        jdk 'JDK17'      // Name must match a JDK installation configured in
-                         // Manage Jenkins -> Tools -> JDK installations
     }
 
     environment {
@@ -25,21 +18,28 @@ pipeline {
     stages {
 
         stage('Checkout') {
+            agent any
             steps {
                 echo 'Pulling source code from GitHub...'
                 checkout scm
+                stash name: 'source', includes: '**'
             }
         }
 
         stage('Build') {
+            agent { docker { image 'maven:3.9-eclipse-temurin-17' } }
             steps {
+                unstash 'source'
                 echo 'Building the application with Maven...'
                 sh 'mvn -B clean compile'
+                stash name: 'build-output', includes: 'target/**'
             }
         }
 
         stage('Test') {
+            agent { docker { image 'maven:3.9-eclipse-temurin-17' } }
             steps {
+                unstash 'source'
                 echo 'Running unit tests...'
                 sh 'mvn -B test'
             }
@@ -51,14 +51,20 @@ pipeline {
         }
 
         stage('Package') {
+            agent { docker { image 'maven:3.9-eclipse-temurin-17' } }
             steps {
+                unstash 'source'
                 echo 'Packaging JAR file...'
                 sh 'mvn -B package -DskipTests'
+                stash name: 'jar', includes: 'target/*.jar'
             }
         }
 
         stage('Docker Build') {
+            agent any
             steps {
+                unstash 'source'
+                unstash 'jar'
                 echo "Building Docker image: ${FULL_IMAGE}"
                 sh """
                     docker build -t ${FULL_IMAGE} -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
@@ -67,6 +73,7 @@ pipeline {
         }
 
         stage('Docker Push') {
+            agent any
             steps {
                 echo 'Pushing image to Docker Hub...'
                 sh '''
@@ -79,7 +86,9 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
+            agent any
             steps {
+                unstash 'source'
                 echo 'Deploying to Kubernetes cluster...'
                 sh '''
                     sed -i "s|IMAGE_PLACEHOLDER|${FULL_IMAGE}|g" k8s/deployment.yaml
@@ -100,7 +109,6 @@ pipeline {
         }
         always {
             echo 'Pipeline finished.'
-            sh 'docker image prune -f || true'   // cleanup dangling images from repeated builds
         }
     }
 }
